@@ -1,7 +1,8 @@
 // src/services/api.js - Updated with production URL
 
 // At the top of api.js
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://paarsh-e-learning-4.onrender.com/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL;
+
 
 // Course API functions
 export const getCourses = async (filters = {}) => {
