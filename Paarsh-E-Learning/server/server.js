@@ -10,6 +10,14 @@ const uri = process.env.MONGODB_URI;
 console.log('🔧 Starting Server...');
 
 // Middleware - Allow both ports
+app.use(cors({
+  origin: [
+    "https://paarshstudentdashboard.vercel.app",
+    "https://paarsh-e-learning.onrender.com"
+  ],
+  credentials: true
+}));
+
 app.use(cors());
 
 
