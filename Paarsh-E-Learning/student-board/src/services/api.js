@@ -3,7 +3,7 @@
 /* =====================================================
    ✅ PRODUCTION BACKEND URL (Render server)
 ===================================================== */
-const API_BASE_URL = "https://paarsh-e-learning-2.onrender.com/api";
+const API_BASE_URL = "https://paarsh-e-learning-2.onrender.com";
 
 
 /* =====================================================
@@ -28,7 +28,7 @@ export const getCourses = async (filters = {}) => {
   const query = new URLSearchParams(filters).toString();
 
   const response = await fetch(
-    `${API_BASE_URL}/courses${query ? `?${query}` : ""}`
+    `${API_BASE_URL}/api/courses${query ? `?${query}` : ""}`
   );
 
   if (!response.ok) throw new Error("Failed to fetch courses");
@@ -38,7 +38,7 @@ export const getCourses = async (filters = {}) => {
 
 
 export const enrollInCourse = async (courseId) => {
-  const response = await fetch(`${API_BASE_URL}/courses/enroll`, {
+  const response = await fetch(`${API_BASE_URL}/api/courses/enroll`, {
     method: "POST",
     headers: getAuthHeaders(),
     body: JSON.stringify({ courseId }),
@@ -54,7 +54,7 @@ export const enrollInCourse = async (courseId) => {
 
 
 export const batchEnrollCourses = async (courseIds) => {
-  const response = await fetch(`${API_BASE_URL}/courses/enroll/batch`, {
+  const response = await fetch(`${API_BASE_URL}/api/courses/enroll/batch`, {
     method: "POST",
     headers: getAuthHeaders(),
     body: JSON.stringify({ courseIds }),
@@ -68,7 +68,7 @@ export const batchEnrollCourses = async (courseIds) => {
 
 export const getMyCourses = async () => {
   const response = await fetch(
-    `${API_BASE_URL}/courses/enrolled/my-courses`,
+    `${API_BASE_URL}/api/courses/enrolled/my-courses`,
     {
       headers: getAuthHeaders(),
     }
@@ -82,7 +82,7 @@ export const getMyCourses = async () => {
 
 export const checkEnrollment = async (courseId) => {
   const response = await fetch(
-    `${API_BASE_URL}/courses/check-enrollment/${courseId}`,
+    `${API_BASE_URL}/api/courses/check-enrollment/${courseId}`,
     {
       headers: getAuthHeaders(),
     }
@@ -96,7 +96,7 @@ export const checkEnrollment = async (courseId) => {
 
 export const updateCourseProgress = async (enrollmentId, progress) => {
   const response = await fetch(
-    `${API_BASE_URL}/courses/progress/${enrollmentId}`,
+    `${API_BASE_URL}/api/courses/progress/${enrollmentId}`,
     {
       method: "PUT",
       headers: getAuthHeaders(),
@@ -111,11 +111,13 @@ export const updateCourseProgress = async (enrollmentId, progress) => {
 
 
 /* =====================================================
-   🔐 AUTH APIs
+   🔐 AUTH APIs - UPDATED TO MATCH YOUR BACKEND
 ===================================================== */
 
 export const registerStudent = async (studentData) => {
-  const response = await fetch(`${API_BASE_URL}/auth/register`, {
+  console.log("Register API called:", `${API_BASE_URL}/api/student/register`);
+  
+  const response = await fetch(`${API_BASE_URL}/api/student/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(studentData),
@@ -126,12 +128,23 @@ export const registerStudent = async (studentData) => {
     throw new Error(err.message || "Registration failed");
   }
 
-  return response.json();
+  const result = await response.json();
+  
+  /* Save login data */
+  if (result.token && result.student) {
+    localStorage.setItem("token", result.token);
+    localStorage.setItem("user", JSON.stringify(result.student));
+    localStorage.setItem("userId", result.student.id || result.student._id);
+  }
+
+  return result;
 };
 
 
 export const loginStudent = async (credentials) => {
-  const response = await fetch(`${API_BASE_URL}/auth/login`, {
+  console.log("Login API called:", `${API_BASE_URL}/api/student/login`);
+  
+  const response = await fetch(`${API_BASE_URL}/api/student/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(credentials),
@@ -145,16 +158,18 @@ export const loginStudent = async (credentials) => {
   const result = await response.json();
 
   /* Save login data */
-  localStorage.setItem("token", result.token);
-  localStorage.setItem("user", JSON.stringify(result.student));
-  localStorage.setItem("userId", result.student.id);
+  if (result.token && result.student) {
+    localStorage.setItem("token", result.token);
+    localStorage.setItem("user", JSON.stringify(result.student));
+    localStorage.setItem("userId", result.student.id || result.student._id);
+  }
 
   return result;
 };
 
 
 export const getCurrentUser = async () => {
-  const response = await fetch(`${API_BASE_URL}/auth/me`, {
+  const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
     headers: getAuthHeaders(),
   });
 
@@ -169,9 +184,36 @@ export const getCurrentUser = async () => {
 ===================================================== */
 
 export const testApiConnection = async () => {
-  const response = await fetch(`${API_BASE_URL}/health`);
+  const response = await fetch(`${API_BASE_URL}/api/health`);
 
   if (!response.ok) throw new Error("Server not reachable");
 
   return response.json();
+};
+
+
+/* =====================================================
+   🆘 Test Backend Endpoints Function
+===================================================== */
+
+export const testBackendEndpoints = async () => {
+  console.log("Testing backend endpoints...");
+  
+  const endpoints = [
+    `${API_BASE_URL}/api/student/login`,
+    `${API_BASE_URL}/api/student/register`,
+    `${API_BASE_URL}/api/auth/login`,
+    `${API_BASE_URL}/api/auth/register`,
+    `${API_BASE_URL}/`,
+    `${API_BASE_URL}/health`,
+  ];
+
+  for (const endpoint of endpoints) {
+    try {
+      const response = await fetch(endpoint, { method: 'GET' });
+      console.log(`${endpoint}: ${response.status} ${response.statusText}`);
+    } catch (error) {
+      console.log(`${endpoint}: ERROR - ${error.message}`);
+    }
+  }
 };
