@@ -20,12 +20,14 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    
+    "start": "set PORT=3001 && react-scripts start",
+   "build": "react-scripts build",
+
+
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "vercel-build": "node vercel-build.js && npm install",
-    "start": "REACT_APP_API_URL=https://paarsh-e-learning-2.onrender.com react-scripts start",
-    "build": "REACT_APP_API_URL=https://paarsh-e-learning-2.onrender.com react-scripts build"
+    "vercel-build": "node vercel-build.js && npm install"
+    
   
    
   },
