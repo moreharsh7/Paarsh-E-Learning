@@ -58,6 +58,21 @@ export const getMyCourses = async () => {
   return res.json();
 };
 
+export const batchEnrollCourses = async (courseIds) => {
+  const response = await fetch(`${API_BASE_URL}/api/courses/enroll/batch`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ courseIds }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Batch enrollment failed");
+  }
+
+  return response.json();
+};
+
+
 
 /* =========================================
    AUTH
