@@ -392,7 +392,7 @@ app.delete('/admin/blogs/:id', async (req, res) => {
     }
 });
 
-app.get('/student-dashboard', (req, res) => {
+app.get('https://paarshstudentdashboard.vercel.app/register', (req, res) => {
     // Check if React app is running (development mode)
     const isDevelopment = process.env.NODE_ENV !== 'production';
     
