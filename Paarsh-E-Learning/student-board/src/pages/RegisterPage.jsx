@@ -6,7 +6,7 @@ import {
   Calendar, MapPin, Book, ChevronDown, CheckCircle,
   AlertCircle, GraduationCap, Briefcase, Users
 } from 'lucide-react';
-import { registerStudent, testApiConnection } from '../services/api';
+import { registerStudent } from '../services/api';
 
 const RegisterPage = ({ setAuth }) => {
   const [showPassword, setShowPassword] = useState(false);
@@ -28,23 +28,7 @@ const RegisterPage = ({ setAuth }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [connectionStatus, setConnectionStatus] = useState('');
   const navigate = useNavigate();
-
-  // Test backend connection on component mount
-  React.useEffect(() => {
-    const testConnection = async () => {
-      try {
-        await testApiConnection();
-        setConnectionStatus('✅ Backend is connected');
-      } catch (err) {
-        setConnectionStatus('❌ Backend connection failed');
-        console.error('Backend connection test failed:', err);
-      }
-    };
-    
-    testConnection();
-  }, []);
 
   const courses = [
     'Computer Science',
@@ -155,13 +139,6 @@ const RegisterPage = ({ setAuth }) => {
       // Clean phone number (remove non-digits)
       const cleanPhone = formData.phone.replace(/\D/g, '');
       
-      console.log('Attempting registration with:', {
-        name: formData.name,
-        email: formData.email,
-        phone: cleanPhone,
-        course: formData.course
-      });
-      
       const response = await registerStudent({
         name: formData.name,
         email: formData.email,
@@ -174,14 +151,16 @@ const RegisterPage = ({ setAuth }) => {
         educationLevel: formData.educationLevel || ''
       });
       
-      console.log('Registration successful:', response);
+      // Save token and user data to localStorage
+      localStorage.setItem('token', response.token);
+      localStorage.setItem('user', JSON.stringify(response.student));
       
       // Update auth state
       if (setAuth) {
         setAuth(true);
       }
       
-      setSuccess('Registration successful! Welcome to Paarsh E-Learning. Redirecting to dashboard...');
+      setSuccess('Registration successful! Welcome to Paarsh E-Learning. Redirecting...');
       
       // Redirect to dashboard after short delay
       setTimeout(() => {
@@ -189,7 +168,6 @@ const RegisterPage = ({ setAuth }) => {
       }, 1500);
       
     } catch (err) {
-      console.error('Registration error:', err);
       setError(err.message || 'Registration failed. Please try again.');
     } finally {
       setIsLoading(false);
@@ -222,17 +200,6 @@ const RegisterPage = ({ setAuth }) => {
       {/* Main Content */}
       <div className="flex-1 flex items-center justify-center p-4">
         <div className="w-full max-w-2xl">
-          {/* Connection Status */}
-          {connectionStatus && (
-            <div className={`mb-4 p-3 rounded-lg text-sm ${
-              connectionStatus.includes('✅') 
-                ? 'bg-green-50 text-green-700 border border-green-200' 
-                : 'bg-red-50 text-red-700 border border-red-200'
-            }`}>
-              {connectionStatus}
-            </div>
-          )}
-
           {/* Registration Card */}
           <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200 hover:shadow-xl transition-shadow">
             {/* Progress Steps */}
