@@ -5,6 +5,7 @@ const API_BASE_URL =
   process.env.REACT_APP_API_URL ||
   'https://paarsh-e-learning-4.onrender.com/api';
 
+console.log("🔥 API BASE URL:", API_BASE_URL);
 
 
 // Course API functions
