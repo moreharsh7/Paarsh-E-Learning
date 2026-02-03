@@ -5,7 +5,6 @@ import {
   LogIn, Mail, Lock, Eye, EyeOff, AlertCircle, 
   Facebook, Twitter, Github, Chrome, Smartphone 
 } from 'lucide-react';
-import { loginStudent } from '../services/api';
 
 const LoginPage = ({ setAuth }) => {
   const [showPassword, setShowPassword] = useState(false);
@@ -22,6 +21,9 @@ const LoginPage = ({ setAuth }) => {
   const [success, setSuccess] = useState('');
   const navigate = useNavigate();
 
+  // Hardcoded API URL
+  const API_BASE_URL = 'https://paarsh-e-learning-2.onrender.com';
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
@@ -29,14 +31,39 @@ const LoginPage = ({ setAuth }) => {
     setIsLoading(true);
     
     try {
-      const response = await loginStudent({
-        email: formData.email,
-        password: formData.password
+      console.log('Attempting login with:', formData.email);
+      console.log('API URL:', `${API_BASE_URL}/api/student/login`);
+      
+      const response = await fetch(`${API_BASE_URL}/api/student/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password
+        })
       });
+
+      console.log('Response status:', response.status);
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ 
+          message: 'Server error' 
+        }));
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('Login response:', data);
+      
+      if (!data.success) {
+        throw new Error(data.message || 'Login failed');
+      }
       
       // Save token and user data to localStorage
-      localStorage.setItem('token', response.token);
-      localStorage.setItem('user', JSON.stringify(response.student));
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.student));
       
       // Update auth state
       if (setAuth) {
@@ -51,6 +78,7 @@ const LoginPage = ({ setAuth }) => {
       }, 1000);
       
     } catch (err) {
+      console.error('Login error:', err);
       setError(err.message || 'Login failed. Please try again.');
     } finally {
       setIsLoading(false);
