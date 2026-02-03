@@ -3,7 +3,8 @@
 /* =====================================================
    ✅ PRODUCTION BACKEND URL (Render server)
 ===================================================== */
-const API_BASE_URL = process.env.REACT_APP_API_URL;
+const API_BASE_URL =  "https://paarsh-e-learning-2.onrender.com";
+;
 
 
 /* =====================================================
