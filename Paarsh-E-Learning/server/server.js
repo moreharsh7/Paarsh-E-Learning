@@ -1,3 +1,4 @@
+// server.js - Updated version
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -6,18 +7,17 @@ require('dotenv').config();
 const app = express();
 
 // Show connection details
-const uri = process.env.MONGODB_URI;
 console.log('🔧 Starting Server...');
 
-// Middleware - Allow both ports
-// server.js - Update CORS configuration
+// CORS Configuration - Updated with correct URLs
 const allowedOrigins = [
   "https://paarshstudentdashboard.vercel.app",
-  "https://paarsh-e-learning-4.onrender.com", // Add your backend URL
-  "http://localhost:3000", // For local development
+  "https://paarsh-e-learning-4.onrender.com", // Your actual backend URL
+  "http://localhost:3000",
   "http://localhost:3001"
 ];
 
+// Use CORS middleware with proper configuration
 app.use(cors({
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps or curl requests)
@@ -34,26 +34,19 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
+// Additional CORS headers for preflight requests
+app.options('*', cors()); // Enable pre-flight across all routes
 
-// Add this middleware after CORS
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-  next();
-});
-
-
-
-
+// Body parsing middleware
 app.use(express.json());
 
 // Import routes
 const authRoutes = require('./routes/auth');
-const courseRoutes = require('./routes/courses'); // Add this
+const courseRoutes = require('./routes/courses');
 
 // Use routes
 app.use('/api/auth', authRoutes);
-app.use('/api/courses', courseRoutes); // Add this
+app.use('/api/courses', courseRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -61,7 +54,7 @@ app.get('/api/health', (req, res) => {
     status: 'Server is running',
     mongoConnected: mongoose.connection.readyState === 1,
     time: new Date().toISOString(),
-    allowedOrigins: ['http://localhost:3000', 'http://localhost:3001','https://paarshstudentdashboard.vercel.app'],
+    allowedOrigins: allowedOrigins,
     routes: ['/api/auth', '/api/courses', '/api/health', '/api/test']
   });
 });
@@ -89,7 +82,10 @@ app.get('/api/test', (req, res) => {
 const connectDB = async () => {
   try {
     console.log('🔗 Connecting to MongoDB Atlas...');
-    await mongoose.connect(process.env.MONGODB_URI);
+    await mongoose.connect(process.env.MONGODB_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
     console.log('✅ MongoDB Connected Successfully!');
     console.log(`📊 Database: ${mongoose.connection.name}`);
   } catch (error) {
@@ -98,6 +94,15 @@ const connectDB = async () => {
   }
 };
 
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ 
+    message: 'Something went wrong!',
+    error: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
+  });
+});
+
 // Start server
 const startServer = async () => {
   await connectDB();
@@ -105,11 +110,12 @@ const startServer = async () => {
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
-    console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
-    console.log(`📚 Courses API: http://localhost:${PORT}/api/courses`);
-    console.log('\n✅ Ready for frontend connections from:');
-    console.log('   - http://localhost:3000');
-    console.log('   - http://localhost:3001');
+    console.log(`🌐 Public URL: https://paarsh-e-learning-4.onrender.com`);
+    console.log(`📊 Health check: https://paarsh-e-learning-4.onrender.com/api/health`);
+    console.log('\n✅ Allowed origins:');
+    allowedOrigins.forEach(origin => {
+      console.log(`   - ${origin}`);
+    });
   });
 };
 

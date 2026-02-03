@@ -95,15 +95,22 @@ export const registerStudent = async (data) => {
 export const loginStudent = async (data) => {
   const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { 
+      "Content-Type": "application/json",
+      "Accept": "application/json"
+    },
     body: JSON.stringify(data),
   });
 
-  if (!res.ok) throw new Error("Login failed");
+   if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.message || 'Login failed');
+  }
 
-  const result = await res.json();
 
-  localStorage.setItem("token", result.token);
+   const result = await res.json();
+
+ localStorage.setItem("token", result.token);
   localStorage.setItem("user", JSON.stringify(result.student));
 
   return result;
