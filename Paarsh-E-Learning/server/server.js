@@ -10,15 +10,8 @@ const uri = process.env.MONGODB_URI;
 console.log('🔧 Starting Server...');
 
 // Middleware - Allow both ports
-app.use(cors({
-  origin: [
-    "http://localhost:3000",
-    "http://localhost:3001",
-    "https://paarshstudentdashboard.vercel.app"
-  ],
-  credentials: true
-}));
 app.use(cors());
+
 
 app.use(express.json());
 
