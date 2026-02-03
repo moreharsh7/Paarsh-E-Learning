@@ -29,7 +29,7 @@ app.get('/api/health', (req, res) => {
     status: 'Server is running',
     mongoConnected: mongoose.connection.readyState === 1,
     time: new Date().toISOString(),
-    allowedOrigins: ['http://localhost:3000', 'http://localhost:3001'],
+    allowedOrigins: ['http://localhost:3000', 'http://localhost:3001','https://paarshstudentdashboard.vercel.app'],
     routes: ['/api/auth', '/api/courses', '/api/health', '/api/test']
   });
 });
