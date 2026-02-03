@@ -2,7 +2,7 @@
    PRODUCTION BACKEND URL
 ========================================= */
 // Make sure this matches your actual backend URL
-const API_BASE_URL ="https://paarsh-e-learning-4.onrender.com";
+const API_BASE_URL ="https://paarsh-e-learning-4.onrender.com/api";
 
 
 /* =========================================
