@@ -10,12 +10,28 @@ const uri = process.env.MONGODB_URI;
 console.log('🔧 Starting Server...');
 
 // Middleware - Allow both ports
+// server.js - Update CORS configuration
+const allowedOrigins = [
+  "https://paarshstudentdashboard.vercel.app",
+  "https://paarsh-e-learning-4.onrender.com", // Add your backend URL
+  "http://localhost:3000", // For local development
+  "http://localhost:3001"
+];
+
 app.use(cors({
-  origin: [
-    "https://paarshstudentdashboard.vercel.app",
-    "https://paarsh-e-learning.onrender.com"
-  ],
-  credentials: true
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = `The CORS policy for this site does not allow access from the specified Origin: ${origin}`;
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
 app.use(cors());
