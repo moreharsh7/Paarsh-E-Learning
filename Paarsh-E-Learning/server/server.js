@@ -1,4 +1,3 @@
-// server.js - Updated version
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -9,35 +8,18 @@ const app = express();
 // Show connection details
 console.log('🔧 Starting Server...');
 
-// CORS Configuration - Updated with correct URLs
-const allowedOrigins = [
-  "https://paarshstudentdashboard.vercel.app",
-  "https://paarsh-e-learning-4.onrender.com", // Your actual backend URL
-  "http://localhost:3000",
-  "http://localhost:3001"
-];
-
-// Use CORS middleware with proper configuration
+// Updated CORS configuration with production frontend URL
 app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = `The CORS policy for this site does not allow access from the specified Origin: ${origin}`;
-      return callback(new Error(msg), false);
-    }
-    return callback(null, true);
-  },
+  origin: [
+    'https://paarshstudentdashboard.vercel.app', // Your Vercel frontend
+    'http://localhost:3000', 
+    'http://localhost:3001'
+  ],
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// Additional CORS headers for preflight requests
-app.options('*', cors()); // Enable pre-flight across all routes
-
-// Body parsing middleware
 app.use(express.json());
 
 // Import routes
@@ -48,14 +30,19 @@ const courseRoutes = require('./routes/courses');
 app.use('/api/auth', authRoutes);
 app.use('/api/courses', courseRoutes);
 
-// Health check endpoint
+// Health check endpoint - Updated with correct origins
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'Server is running',
     mongoConnected: mongoose.connection.readyState === 1,
     time: new Date().toISOString(),
-    allowedOrigins: allowedOrigins,
-    routes: ['/api/auth', '/api/courses', '/api/health', '/api/test']
+    allowedOrigins: [
+      'https://paarshstudentdashboard.vercel.app',
+      'http://localhost:3000', 
+      'http://localhost:3001'
+    ],
+    routes: ['/api/auth', '/api/courses', '/api/health', '/api/test'],
+    backendUrl: 'https://paarsh-e-learning-4.onrender.com'
   });
 });
 
@@ -78,6 +65,9 @@ app.get('/api/test', (req, res) => {
   });
 });
 
+// Add OPTIONS handling for preflight requests
+app.options('*', cors());
+
 // Connect to MongoDB
 const connectDB = async () => {
   try {
@@ -96,7 +86,7 @@ const connectDB = async () => {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  console.error('❌ Server Error:', err.stack);
   res.status(500).json({ 
     message: 'Something went wrong!',
     error: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
@@ -109,13 +99,13 @@ const startServer = async () => {
   
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {
-    console.log(`🚀 Server running on http://localhost:${PORT}`);
+    console.log(`🚀 Server running on port: ${PORT}`);
     console.log(`🌐 Public URL: https://paarsh-e-learning-4.onrender.com`);
     console.log(`📊 Health check: https://paarsh-e-learning-4.onrender.com/api/health`);
-    console.log('\n✅ Allowed origins:');
-    allowedOrigins.forEach(origin => {
-      console.log(`   - ${origin}`);
-    });
+    console.log('\n✅ Allowed CORS origins:');
+    console.log('   - https://paarshstudentdashboard.vercel.app');
+    console.log('   - http://localhost:3000');
+    console.log('   - http://localhost:3001');
   });
 };
 

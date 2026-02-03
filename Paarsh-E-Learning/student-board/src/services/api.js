@@ -1,127 +1,313 @@
-/* =========================================
-   PRODUCTION BACKEND URL
-========================================= */
-// Make sure this matches your actual backend URL
-const API_BASE_URL ="https://paarsh-e-learning-4.onrender.com/api";
+// src/services/api.js - Updated with production URL
 
+// At the top of api.js
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://paarsh-e-learning-4.onrender.com/api';
 
-/* =========================================
-   Helper
-========================================= */
-const getAuthHeaders = () => {
-  const token = localStorage.getItem("token");
-
-  return {
-    "Content-Type": "application/json",
-    ...(token && { Authorization: `Bearer ${token}` }),
-  };
-};
-
-
-/* =========================================
-   COURSES
-========================================= */
-
+// Course API functions
 export const getCourses = async (filters = {}) => {
-  const query = new URLSearchParams(filters).toString();
-
-  const res = await fetch(
-    `${API_BASE_URL}/api/courses${query ? `?${query}` : ""}`
-  );
-
-  if (!res.ok) throw new Error("Failed to fetch courses");
-
-  return res.json();
+  try {
+    const queryParams = new URLSearchParams();
+    
+    if (filters.category) queryParams.append('category', filters.category);
+    if (filters.search) queryParams.append('search', filters.search);
+    if (filters.minPrice) queryParams.append('minPrice', filters.minPrice);
+    if (filters.maxPrice) queryParams.append('maxPrice', filters.maxPrice);
+    if (filters.level) queryParams.append('level', filters.level);
+    
+    const url = `${API_BASE_URL}/courses${queryParams.toString() ? `?${queryParams}` : ''}`;
+    
+    console.log('Fetching courses from:', url);
+    
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch courses: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log(`Fetched ${data.length} courses`);
+    return data;
+  } catch (error) {
+    console.error('Error fetching courses:', error);
+    throw error;
+  }
 };
-
 
 export const enrollInCourse = async (courseId) => {
-  const res = await fetch(`${API_BASE_URL}/api/courses/enroll`, {
-    method: "POST",
-    headers: getAuthHeaders(),
-    body: JSON.stringify({ courseId }),
-  });
-
-  if (!res.ok) throw new Error("Enrollment failed");
-
-  return res.json();
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('No authentication token found. Please login.');
+    }
+    
+    const response = await fetch(`${API_BASE_URL}/courses/enroll`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ courseId })
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Enrollment failed');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error enrolling in course:', error);
+    throw error;
+  }
 };
 
+// Updated batchEnrollCourses function
+export const batchEnrollCourses = async (courseIds) => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('Please login to enroll in courses');
+    }
+    
+    console.log('📦 Batch enrolling courses:', courseIds);
+    
+    const response = await fetch(`${API_BASE_URL}/courses/enroll/batch`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ courseIds })
+    });
+    
+    const responseText = await response.text();
+    console.log('📄 Raw response:', responseText);
+    
+    let result;
+    try {
+      result = JSON.parse(responseText);
+    } catch (e) {
+      console.error('❌ Failed to parse JSON response:', e);
+      throw new Error('Invalid server response');
+    }
+    
+    if (!response.ok) {
+      console.error('❌ API Error:', result);
+      throw new Error(result.message || `Enrollment failed: ${response.status}`);
+    }
+    
+    console.log('✅ Batch enrollment successful:', result);
+    return result;
+    
+  } catch (error) {
+    console.error('❌ Error in batch enrollment:', error);
+    throw error;
+  }
+};
 
 export const getMyCourses = async () => {
-  const res = await fetch(
-    `${API_BASE_URL}/api/courses/enrolled/my-courses`,
-    { headers: getAuthHeaders() }
-  );
-
-  if (!res.ok) throw new Error("Failed to fetch courses");
-
-  return res.json();
-};
-
-export const batchEnrollCourses = async (courseIds) => {
-  const response = await fetch(`${API_BASE_URL}/api/courses/enroll/batch`, {
-    method: "POST",
-    headers: getAuthHeaders(),
-    body: JSON.stringify({ courseIds }),
-  });
-
-  if (!response.ok) {
-    throw new Error("Batch enrollment failed");
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('Please login to view your courses');
+    }
+    
+    console.log('📚 Fetching enrolled courses...');
+    
+    const response = await fetch(`${API_BASE_URL}/courses/enrolled/my-courses`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ Failed to fetch enrolled courses:', errorText);
+      throw new Error(`Failed to fetch enrolled courses: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log(`✅ Fetched ${data.length} enrolled courses`);
+    return data;
+    
+  } catch (error) {
+    console.error('❌ Error fetching enrolled courses:', error);
+    throw error;
   }
-
-  return response.json();
 };
 
-
-
-/* =========================================
-   AUTH
-========================================= */
-
-export const registerStudent = async (data) => {
-  const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
-
-  if (!res.ok) throw new Error("Registration failed");
-
-  return res.json();
-};
-
-
-export const loginStudent = async (data) => {
-  const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
-    method: "POST",
-    headers: { 
-      "Content-Type": "application/json",
-      "Accept": "application/json"
-    },
-    body: JSON.stringify(data),
-  });
-
-   if (!res.ok) {
-    const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.message || 'Login failed');
+// Add this function to debug enrollments
+export const debugEnrollments = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('Please login');
+    }
+    
+    const response = await fetch(`${API_BASE_URL}/courses/debug/enrollments`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Debug error:', error);
+    throw error;
   }
-
-
-   const result = await res.json();
-
- localStorage.setItem("token", result.token);
-  localStorage.setItem("user", JSON.stringify(result.student));
-
-  return result;
 };
 
+export const checkEnrollment = async (courseId) => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('No authentication token found. Please login.');
+    }
+    
+    const response = await fetch(`${API_BASE_URL}/courses/check-enrollment/${courseId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to check enrollment status');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error checking enrollment:', error);
+    throw error;
+  }
+};
 
-/* =========================================
-   HEALTH
-========================================= */
+export const updateCourseProgress = async (enrollmentId, progress) => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('No authentication token found. Please login.');
+    }
+    
+    const response = await fetch(`${API_BASE_URL}/courses/progress/${enrollmentId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ progress })
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to update progress');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating progress:', error);
+    throw error;
+  }
+};
 
+// Auth functions
+export const registerStudent = async (studentData) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(studentData),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Registration failed');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Registration error:', error);
+    throw error;
+  }
+};
+
+export const loginStudent = async (credentials) => {
+  try {
+    console.log('🌐 Sending login request to:', `${API_BASE_URL}/auth/login`);
+    console.log('📧 Email:', credentials.email);
+    
+    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(credentials),
+    });
+
+    console.log('📡 Response status:', response.status);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ Login failed:', errorText);
+      throw new Error('Login failed. Please check your credentials.');
+    }
+
+    const result = await response.json();
+    console.log('✅ Login successful:', result.message);
+    
+    // Save token and user info to localStorage
+    localStorage.setItem('token', result.token);
+    localStorage.setItem('user', JSON.stringify(result.student));
+    localStorage.setItem('userId', result.student.id);
+    
+    return result;
+  } catch (error) {
+    console.error('Login error:', error);
+    throw error;
+  }
+};
+
+export const getCurrentUser = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+    
+    const response = await fetch(`${API_BASE_URL}/auth/me`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to get current user');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error getting current user:', error);
+    throw error;
+  }
+};
+
+// Test API connection
 export const testApiConnection = async () => {
-  const res = await fetch(`${API_BASE_URL}/api/health`);
-  return res.json();
+  try {
+    const url = `${API_BASE_URL}/health`.replace('/api/api/', '/api/');
+    console.log('🌐 Testing API connection to:', url);
+    
+    const response = await fetch(url);
+    const data = await response.json();
+    console.log('✅ API Connection successful:', data);
+    return data;
+  } catch (error) {
+    console.error('❌ API connection test failed:', error);
+    return { 
+      status: 'Server not reachable', 
+      error: error.message,
+      apiUrl: API_BASE_URL 
+    };
+  }
 };
