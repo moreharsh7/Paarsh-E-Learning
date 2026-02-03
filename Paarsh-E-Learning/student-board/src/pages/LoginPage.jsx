@@ -5,7 +5,7 @@ import {
   LogIn, Mail, Lock, Eye, EyeOff, AlertCircle, 
   Facebook, Twitter, Github, Chrome, Smartphone 
 } from 'lucide-react';
-import { loginStudent } from '../services/api';
+import { loginStudent, testApiConnection } from '../services/api';
 
 const LoginPage = ({ setAuth }) => {
   const [showPassword, setShowPassword] = useState(false);
@@ -20,7 +20,23 @@ const LoginPage = ({ setAuth }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [connectionStatus, setConnectionStatus] = useState('');
   const navigate = useNavigate();
+
+  // Test backend connection on component mount
+  React.useEffect(() => {
+    const testConnection = async () => {
+      try {
+        await testApiConnection();
+        setConnectionStatus('✅ Backend is connected');
+      } catch (err) {
+        setConnectionStatus('❌ Backend connection failed');
+        console.error('Backend connection test failed:', err);
+      }
+    };
+    
+    testConnection();
+  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -29,21 +45,21 @@ const LoginPage = ({ setAuth }) => {
     setIsLoading(true);
     
     try {
+      console.log('Attempting login with email:', formData.email);
+      
       const response = await loginStudent({
         email: formData.email,
         password: formData.password
       });
       
-      // Save token and user data to localStorage
-      localStorage.setItem('token', response.token);
-      localStorage.setItem('user', JSON.stringify(response.student));
+      console.log('Login successful:', response);
       
       // Update auth state
       if (setAuth) {
         setAuth(true);
       }
       
-      setSuccess('Login successful! Redirecting...');
+      setSuccess('Login successful! Redirecting to dashboard...');
       
       // Redirect to dashboard after short delay
       setTimeout(() => {
@@ -51,7 +67,8 @@ const LoginPage = ({ setAuth }) => {
       }, 1000);
       
     } catch (err) {
-      setError(err.message || 'Login failed. Please try again.');
+      console.error('Login error:', err);
+      setError(err.message || 'Login failed. Please check your credentials and try again.');
     } finally {
       setIsLoading(false);
     }
@@ -102,6 +119,17 @@ const LoginPage = ({ setAuth }) => {
       {/* Main Content */}
       <div className="flex-1 flex items-center justify-center p-4">
         <div className="w-full max-w-md">
+          {/* Connection Status */}
+          {connectionStatus && (
+            <div className={`mb-4 p-3 rounded-lg text-sm ${
+              connectionStatus.includes('✅') 
+                ? 'bg-green-50 text-green-700 border border-green-200' 
+                : 'bg-red-50 text-red-700 border border-red-200'
+            }`}>
+              {connectionStatus}
+            </div>
+          )}
+
           {/* Welcome Back Card */}
           <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200 hover:shadow-xl transition-shadow">
             <div className="p-8">
