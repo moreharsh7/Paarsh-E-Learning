@@ -47,4 +47,4 @@ app.get('/api/health', (req, res) => {
 
 // ❌ NO app.listen()
 // ✅ export handler
-module.exports = serverless(app);
+module.exports = app; 
